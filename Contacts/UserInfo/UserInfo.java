@@ -1,11 +1,11 @@
 package UserInfo;
 
 
-public class UserInfo {
+public abstract class UserInfo {
   private final int MAX_NUMBER_LENGTH = 15;
-  private String userNumber;
-  private String userName;
-  private String userSurname;
+  protected String userNumber;
+  protected String userName;
+  protected String userSurname;
 
   // Pre-init
   {
@@ -38,4 +38,7 @@ public class UserInfo {
   public String getNumber()  { return this.userNumber;  }
   public String getName()    { return this.userName;    }
   public String getSurname() { return this.userSurname; }
+
+  public abstract String getContactType();
+  public abstract String getFullInfo();
 }

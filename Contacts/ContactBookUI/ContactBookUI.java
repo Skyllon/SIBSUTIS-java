@@ -1,16 +1,15 @@
 package ContactBookUI;
 
+
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.util.Random;
 import java.util.ArrayList;
 
 // UI and ADT
 import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -34,11 +34,14 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.security.PermissionCollection;
 import java.awt.event.KeyEvent;
 
 // Contacts manage and store
 import ContactBook.ContactBook;
 import UserInfo.UserInfo;
+import UserInfo.PersonalUserInfo;
+import UserInfo.WorkUserInfo;
 
 public class ContactBookUI extends JFrame {
 	private HashMap<Integer, UserInfo> contacts;
@@ -193,7 +196,7 @@ public class ContactBookUI extends JFrame {
 		});
 
 		for (Map.Entry<Integer, UserInfo> entry : sortedContacts) {
-			UserInfo user = entry.getValue();
+			UserInfo user 		 = entry.getValue();
 			String contactInfo = String.format("%s %s: %s",
 				user.getName(), user.getSurname(), user.getNumber());
 			listModel.addElement(contactInfo);
@@ -203,29 +206,32 @@ public class ContactBookUI extends JFrame {
 		countLabel.setText("Всего контактов: " + listModel.getSize());
   }
 
-	private void addUserDialog(HashMap<Integer, UserInfo> contacts) {
-		JDialog dialog = new JDialog(this, "Добавить контакт", true);
-		dialog.setLayout(new GridLayout(5, 2, 4, 4));
-		dialog.setSize(300, 250);
+ private void addUserDialog(HashMap<Integer, UserInfo> contacts) {
+		String[] contactTypes = {"Личный", "Рабочий"};
+		String selectedType   = (String) JOptionPane.showInputDialog(
+			this, "Выберите тип контакта:", "Тип контакта",
+			JOptionPane.QUESTION_MESSAGE, null, contactTypes, contactTypes[0]);
+
+		if (selectedType == null) return;
+
+		JDialog dialog = new JDialog(this, "Добавить " + selectedType.toLowerCase() + " контакт", true);
+		dialog.setLayout(new GridLayout(0, 2, 4, 4));
+		dialog.setSize(400, 300);
 		dialog.setLocationRelativeTo(this);
 
-		JTextField numberField = new JTextField();
-		JTextField nameField = new JTextField();
-		JTextField surnameField = new JTextField();
+		JTextField numberField  	= new JTextField();
+		JTextField nameField    	= new JTextField();
+		JTextField surnameField 	= new JTextField();
 
-		JButton addButton = new JButton("Добавить");
-		addButton.addActionListener(event -> {
-			String number = numberField.getText();
-			String name = nameField.getText();
-			String surname = surnameField.getText();
+		// Work
+		JTextField birthDateField = new JTextField();
+		JTextField extraInfoField = new JTextField();
+		JTextField addressField   = new JTextField();
 
-			if (!name.isEmpty() && !number.isEmpty()) {
-				ContactBook.addUser(number, name, surname, contacts);
-				updateContactsList(contacts);
-				dialog.dispose();
-			} else
-				JOptionPane.showMessageDialog(dialog, "Заполните обязательные поля!");
-		});
+		// Pers
+		JTextField companyField 	= new JTextField();
+		JTextField postField  	  = new JTextField();
+		JTextField emailField     = new JTextField();
 
 		dialog.add(new JLabel("* - обязательные поля"));
 		dialog.add(new JLabel(""));
@@ -235,21 +241,67 @@ public class ContactBookUI extends JFrame {
 		dialog.add(nameField);
 		dialog.add(new JLabel("Фамилия:"));
 		dialog.add(surnameField);
-		dialog.add(addButton);
 
+		if ("Личный".equals(selectedType)) {
+			dialog.add(new JLabel("Дата рождения:"));
+			dialog.add(birthDateField);
+			dialog.add(new JLabel("Описание:"));
+			dialog.add(extraInfoField);
+			dialog.add(new JLabel("Адрес:"));
+			dialog.add(addressField);
+		} else {
+			dialog.add(new JLabel("Компания:"));
+			dialog.add(companyField);
+			dialog.add(new JLabel("Должность:"));
+			dialog.add(postField);
+			dialog.add(new JLabel("Почта:"));
+			dialog.add(emailField);
+		}
+
+		JButton addButton = new JButton("Добавить");
+		addButton.addActionListener(event -> {
+			String number  = numberField.getText();
+			String name 	 = nameField.getText();
+			String surname = surnameField.getText();
+
+			if (!name.isEmpty() && !number.isEmpty()) {
+				try {
+					UserInfo newContact;
+
+					if ("Личный".equals(selectedType)) {
+						newContact = new PersonalUserInfo(
+							number, name, surname,
+							birthDateField.getText(),
+							extraInfoField.getText(),
+							addressField.getText()
+						);
+					} else {
+						newContact = new WorkUserInfo(
+							number, name, surname,
+							companyField.getText(),
+							postField.getText(),
+							emailField.getText()
+						);
+					}
+
+					int id = ContactBook.addUser(newContact, contacts);
+					updateContactsList(contacts);
+					dialog.dispose();
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(dialog, "Ошибка при создании контакта: " + e.getMessage());
+				}
+			} else {
+				JOptionPane.showMessageDialog(dialog, "Заполните обязательные поля!");
+			}
+		});
+
+		dialog.add(new JLabel(""));
+		dialog.add(addButton);
 		dialog.setVisible(true);
 	}
 
 	private void setupContextMenu() {
-    contextMenu 						 = new JPopupMenu();
-    JMenuItem editMenuItem   = new JMenuItem("Изменить");
-    JMenuItem deleteMenuItem = new JMenuItem("Удалить");
-
-    editMenuItem.addActionListener(e -> editSelectedContact());
-    deleteMenuItem.addActionListener(e -> deleteSelectedContact());
-
-    contextMenu.add(editMenuItem);
-    contextMenu.add(deleteMenuItem);
+    contextMenu = new JPopupMenu();
 
     contactsList.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -258,10 +310,39 @@ public class ContactBookUI extends JFrame {
 
 					if (index >= 0) {
 						contactsList.setSelectedIndex(index);
+						int contactId    = idList.get(index);
+						UserInfo contact = contacts.get(contactId);
+
+						contextMenu.removeAll();
+
+						JMenuItem editMenuItem   = new JMenuItem("Изменить");
+						JMenuItem deleteMenuItem = new JMenuItem("Удалить");
+						JMenuItem aboutMenuItem  = new JMenuItem("Подробнее");
+
+						editMenuItem.addActionListener(e1 -> editSelectedContact());
+						deleteMenuItem.addActionListener(e1 -> deleteSelectedContact());
+						aboutMenuItem.addActionListener(e1 -> aboutSelectedContact());
+
+						contextMenu.add(editMenuItem);
+						contextMenu.add(deleteMenuItem);
+						contextMenu.add(aboutMenuItem);
+
+						contextMenu.addSeparator();
+
+						JMenuItem callMenuItem = new JMenuItem("Позвонить");
+						callMenuItem.addActionListener(e1 -> callSelectedContact());
+						contextMenu.add(callMenuItem);
+
+						if (contact instanceof WorkUserInfo) {
+							JMenuItem emailMenuItem = new JMenuItem("Отправить сообщение");
+							emailMenuItem.addActionListener(e1 -> emailSelectedContact());
+							contextMenu.add(emailMenuItem);
+						}
+
 						contextMenu.show(contactsList, e.getX(), e.getY());
 					}
 				}
-			}
+        }
     });
 	}
 
@@ -291,20 +372,83 @@ public class ContactBookUI extends JFrame {
 		}
 	}
 
-	// TODO: refactor this.
-	// This part dublicate of userAdd. Maybe method's overload?
+	private void aboutSelectedContact() {
+		int selectedIndex = contactsList.getSelectedIndex();
+		if (selectedIndex >= 0 && selectedIndex < idList.size()) {
+			int contactId = idList.get(selectedIndex);
+			UserInfo contact = contacts.get(contactId);
+
+			JTextArea textArea = new JTextArea(contact.getFullInfo());
+			textArea.setEditable(false);
+			textArea.setLineWrap(true);
+			textArea.setWrapStyleWord(true);
+
+			JScrollPane scrollPane = new JScrollPane(textArea);
+			scrollPane.setPreferredSize(new Dimension(400, 300));
+
+			JOptionPane.showMessageDialog(this, scrollPane,
+				"Подробная информация о контакте", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
 	private void editUserDialog(int contactId, UserInfo user) {
-		JDialog dialog = new JDialog(this, "Редактировать контакт", true);
-		dialog.setLayout(new GridLayout(5, 2, 4, 4));
-		dialog.setSize(300, 250);
-		dialog.setLocationRelativeTo(this);
+    String contactType = user.getContactType();
+    JDialog dialog = new JDialog(this, "Редактировать " + contactType.toLowerCase() + " контакт", true);
 
-		JTextField numberField = new JTextField(user.getNumber());
-		JTextField nameField = new JTextField(user.getName());
-		JTextField surnameField = new JTextField(user.getSurname());
+    int rows = ("Личный".equals(contactType)) ? 8 : 8;
+    dialog.setLayout(new GridLayout(rows, 2, 4, 4));
+    dialog.setSize(400, 350);
+    dialog.setLocationRelativeTo(this);
 
-		JButton saveButton = new JButton("Сохранить");
-		saveButton.addActionListener(event -> {
+    JTextField numberField  	= new JTextField(user.getNumber());
+    JTextField nameField      = new JTextField(user.getName());
+    JTextField surnameField   = new JTextField(user.getSurname());
+    JTextField birthDateField = new JTextField();
+    JTextField aboutUserField = new JTextField();
+    JTextField addressField 	= new JTextField();
+    JTextField companyField 	= new JTextField();
+    JTextField postField 			= new JTextField();
+    JTextField emailField 		= new JTextField();
+
+    if (user instanceof PersonalUserInfo) {
+			PersonalUserInfo personal = (PersonalUserInfo) user;
+			birthDateField.setText(personal.getBirthDate());
+			aboutUserField.setText(personal.getAboutUser());
+			addressField.setText(personal.getAddress());
+    } else if (user instanceof WorkUserInfo) {
+			WorkUserInfo work = (WorkUserInfo) user;
+			companyField.setText(work.getCompany());
+			postField.setText(work.getPost());
+			emailField.setText(work.getEmail());
+    }
+
+    dialog.add(new JLabel("* - обязательные поля"));
+    dialog.add(new JLabel(""));
+    dialog.add(new JLabel("Номер*:"));
+    dialog.add(numberField);
+    dialog.add(new JLabel("Имя*:"));
+    dialog.add(nameField);
+    dialog.add(new JLabel("Фамилия:"));
+    dialog.add(surnameField);
+
+    if (user instanceof PersonalUserInfo) {
+			dialog.add(new JLabel("Дата рождения:"));
+			dialog.add(birthDateField);
+			dialog.add(new JLabel("Описание:"));
+			dialog.add(aboutUserField);
+			dialog.add(new JLabel("Адрес:"));
+			dialog.add(addressField);
+    } else if (user instanceof WorkUserInfo) {
+			dialog.add(new JLabel("Компания:"));
+			dialog.add(companyField);
+			dialog.add(new JLabel("Должность:"));
+			dialog.add(postField);
+			dialog.add(new JLabel("Email:"));
+			dialog.add(emailField);
+    }
+
+    JButton saveButton = new JButton("Сохранить");
+    saveButton.addActionListener(event -> {
 			String number = numberField.getText();
 			String name = nameField.getText();
 			String surname = surnameField.getText();
@@ -313,29 +457,122 @@ public class ContactBookUI extends JFrame {
 				user.setNumber(number);
 				user.setName(name);
 				user.setSurname(surname);
+
+				if (user instanceof PersonalUserInfo) {
+					PersonalUserInfo personal = (PersonalUserInfo) user;
+					personal.setBirthDate(birthDateField.getText());
+					personal.setAboutUser(aboutUserField.getText());
+					personal.setAddress(addressField.getText());
+				} else if (user instanceof WorkUserInfo) {
+					WorkUserInfo work = (WorkUserInfo) user;
+					work.setCompany(companyField.getText());
+					work.setPost(postField.getText());
+					work.setEmail(emailField.getText());
+				}
+
 				contacts.put(contactId, user);
 				updateContactsList(contacts);
 				dialog.dispose();
 			} else
 				JOptionPane.showMessageDialog(dialog, "Заполните обязательные поля!");
-		});
+    });
 
-		dialog.add(new JLabel("* - обязательные поля"));
-		dialog.add(new JLabel(""));
-		dialog.add(new JLabel("Номер*:"));
-		dialog.add(numberField);
-		dialog.add(new JLabel("Имя*:"));
-		dialog.add(nameField);
-		dialog.add(new JLabel("Фамилия:"));
-		dialog.add(surnameField);
-		dialog.add(new JLabel(""));
-		dialog.add(saveButton);
-
-		dialog.setVisible(true);
-	}
+    dialog.add(new JLabel(""));
+    dialog.add(saveButton);
+    dialog.setVisible(true);
+}
 
 	private void filterContacts() {
 		currentFilter = searchField.getText().toLowerCase();
 		updateContactsList(contacts);
   }
+
+	private void callSelectedContact() {
+    int selectedIndex = contactsList.getSelectedIndex();
+
+    if (selectedIndex >= 0 && selectedIndex < idList.size()) {
+			int contactId = idList.get(selectedIndex);
+			UserInfo contact = contacts.get(contactId);
+
+			JDialog callDialog = new JDialog(this, "Звонок", false);
+			callDialog.setLayout(new BorderLayout());
+			callDialog.setSize(300, 200);
+			callDialog.setLocationRelativeTo(this);
+
+			JLabel statusLabel = new JLabel("🕐 Начинаем звонок...", JLabel.CENTER);
+			callDialog.add(statusLabel, BorderLayout.CENTER);
+
+			JButton closeBtn = new JButton("Закрыть");
+			closeBtn.setEnabled(true);
+			callDialog.add(closeBtn, BorderLayout.SOUTH);
+
+			Thread soundThread = new Thread(() -> {
+				try {
+					SwingUtilities.invokeLater(() -> statusLabel.setText("🔔 Идет звонок..."));
+
+					if (contact instanceof PersonalUserInfo)
+						((PersonalUserInfo) contact).call();
+					else if (contact instanceof WorkUserInfo)
+						((WorkUserInfo) contact).call();
+
+					SwingUtilities.invokeLater(() -> {
+						statusLabel.setText("✅ Звонок завершен");
+					});
+
+				} catch (Exception e) {
+					SwingUtilities.invokeLater(() -> {
+						statusLabel.setText("❌ Ошибка: " + e.getMessage());
+					});
+				}
+			});
+
+			closeBtn.addActionListener(e -> {
+				soundThread.interrupt();
+				callDialog.dispose();
+			});
+
+			soundThread.start();
+			callDialog.setVisible(true);
+	}
+}
+
+	private void emailSelectedContact() {
+		int selectedIndex = contactsList.getSelectedIndex();
+		if (selectedIndex >= 0 && selectedIndex < idList.size()) {
+			int contactId = idList.get(selectedIndex);
+			UserInfo contact = contacts.get(contactId);
+
+			if (contact instanceof WorkUserInfo) {
+				WorkUserInfo workContact = (WorkUserInfo) contact;
+				String email 						 = workContact.getEmail();
+				String message 					 = JOptionPane.showInputDialog(this,
+					"Введите сообщение для " + workContact.getName() + ":\nПолучатель: " + email,
+					"Отправить сообщение", JOptionPane.QUESTION_MESSAGE);
+
+				if (message != null && !message.trim().isEmpty()) {
+					// 50/50 работающая халява. Actually useless
+					String[] randErrors = {
+						"Потеряно соединение с интернетом...",
+						"Указанная почта не найдена :(",
+						"Пользователь запретил Вам отправлять ему сообщения",
+						"Вы не нравитесь получателю"
+					};
+
+					Random rand = new Random();
+					int status  = rand.nextInt(4);
+					System.out.println("[DEBUG_EMAIL_STATUS]: " + status);
+
+					if (status % 2 == 0) {
+						JOptionPane.showMessageDialog(this,
+							"✉️ Сообщение отправлено на " + email + ":\n" + message,
+							"✅ Сообщение отправлено", JOptionPane.INFORMATION_MESSAGE);
+					} else {
+						JOptionPane.showMessageDialog(this,
+							"✉️ Сообщение не было отправлено на " + email + ":\n" + randErrors[status],
+							"❌ Сообщение не отправлено", JOptionPane.INFORMATION_MESSAGE);
+					}
+				}
+			}
+		}
+	}
 }

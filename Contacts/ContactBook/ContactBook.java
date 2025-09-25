@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import UserInfo.UserInfo;
+import UserInfo.WorkUserInfo;
+import UserInfo.PersonalUserInfo;
 
 public class ContactBook {
   private static final int MAX_CONTACT_NUMBER = 1000;
@@ -21,45 +23,58 @@ public class ContactBook {
     return contactBook;
   }
 
-  public static int addUser(
-    String userNumber,
-    String userName,
-    String userSurname,
-    HashMap<Integer, UserInfo> contactBook
-  ) {
-    UserInfo newUser = new UserInfo(userNumber, userName, userSurname);
-    int id = ++nextId;
-    contactBook.put(id, newUser);
+  public static int addUser(UserInfo user, HashMap<Integer, UserInfo> contactBook) {
+    int id = nextId++;
+    contactBook.put(id, user);
     return id;
   }
 
   public static boolean saveUsers(HashMap<Integer, UserInfo> contacts, File file) {
-    BufferedWriter buffer = null;
-
-    try {
-      buffer = new BufferedWriter(new FileWriter(file));
-
+    try (BufferedWriter buffer = new BufferedWriter(new FileWriter(file))) {
       for (Map.Entry<Integer, UserInfo> entry : contacts.entrySet()) {
         UserInfo user = entry.getValue();
-        String line = String.format("%d|%s|%s|%s",
-          entry.getKey(),
-          user.getNumber(),
-          user.getName(),
-          user.getSurname()
-        );
+        String line;
+
+        if (user instanceof PersonalUserInfo) {
+          PersonalUserInfo personal = (PersonalUserInfo) user;
+          line = String.format("%d|personal|%s|%s|%s|%s|%s|%s",
+            entry.getKey(),
+            personal.getNumber(),
+            personal.getName(),
+            personal.getSurname(),
+            personal.getBirthDate(),
+            personal.getAboutUser(),
+            personal.getAddress()
+          );
+        } else if (user instanceof WorkUserInfo) {
+          WorkUserInfo work = (WorkUserInfo) user;
+          line = String.format("%d|work|%s|%s|%s|%s|%s|%s",
+            entry.getKey(),
+            work.getNumber(),
+            work.getName(),
+            work.getSurname(),
+            work.getCompany(),
+            work.getPost(),
+            work.getEmail()
+          );
+        } else {
+          line = String.format("%d|basic|%s|%s|%s",
+            entry.getKey(),
+            user.getNumber(),
+            user.getName(),
+            user.getSurname()
+          );
+        }
+
         buffer.write(line);
         buffer.newLine();
       }
-
       buffer.flush();
+
       return true;
     } catch (IOException e) {
-      e.printStackTrace();
-      return false;
-    } finally {
-      try {
-        if (buffer != null) buffer.close();
-      } catch (Exception e) { e.printStackTrace(); }
+        e.printStackTrace();
+        return false;
     }
   }
 
@@ -74,27 +89,59 @@ public class ContactBook {
       while ((line = buffer.readLine()) != null) {
         String[] parts = line.split("\\|");
 
-        if (parts.length == 4) {
-          Integer id       = Integer.parseInt(parts[0]);
-          String number    = parts[1];
-          String name      = parts[2];
-          String surname   = parts[3];
+        if (parts.length >= 5) {
+          Integer id = Integer.parseInt(parts[0]);
+          String type = parts[1];
+          String number = parts[2];
+          String name = parts[3];
+          String surname = parts[4];
 
           if (id > maxId) maxId = id;
 
-          UserInfo user = new UserInfo(number, name, surname);
-          contacts.put(id, user);
-        }
+          UserInfo user;
+
+          if ("personal".equals(type) && parts.length >= 8) {
+            // pers: id|personal|number|name|surname|birthDate|aboutUser|address
+            user = new PersonalUserInfo(
+              number,
+              name,
+              surname,
+              parts[5],
+              parts[6],
+              parts[7]
+              );
+          } else if ("work".equals(type) && parts.length >= 8) {
+              // work: id|work|number|name|surname|company|post|email
+              user = new WorkUserInfo(
+                number,
+                name,
+                surname,
+                parts[5],
+                parts[6],
+                parts[7]
+              );
+          } else {
+            // err
+            user = new UserInfo(number, name, surname) {
+              public String getContactType() { return "Базовый"; }
+              public String getFullInfo() {
+                return String.format("Имя: %s\nНомер: %s\nФамилия: %s",
+                  userName, userNumber, userSurname);
+              }
+            };
+            }
+
+            contacts.put(id, user);
+          }
       }
 
-      nextId = maxId++;
-
+      nextId = maxId + 1;
       return true;
     } catch (IOException e) {
       e.printStackTrace();
       return false;
     }
-  }
+}
 
   public static int getNextId() { return nextId; }
 }
