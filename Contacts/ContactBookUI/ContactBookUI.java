@@ -11,8 +11,10 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -34,7 +36,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.security.PermissionCollection;
 import java.awt.event.KeyEvent;
 
 // Contacts manage and store
@@ -45,6 +46,7 @@ import UserInfo.WorkUserInfo;
 
 public class ContactBookUI extends JFrame {
 	private HashMap<Integer, UserInfo> contacts;
+	private Set<UserInfo> favoriteContacts;
 	private JList<String> contactsList;
 	private ArrayList<Integer> idList;
 	private JPopupMenu contextMenu;
@@ -57,6 +59,7 @@ public class ContactBookUI extends JFrame {
 
 	public ContactBookUI() {
 		contacts = ContactBook.init();
+		favoriteContacts = new HashSet<>();
 
 		// Window
 		setTitle(WindowParams.WINDOW_TITLE);
@@ -315,17 +318,20 @@ public class ContactBookUI extends JFrame {
 
 						contextMenu.removeAll();
 
-						JMenuItem editMenuItem   = new JMenuItem("Изменить");
-						JMenuItem deleteMenuItem = new JMenuItem("Удалить");
-						JMenuItem aboutMenuItem  = new JMenuItem("Подробнее");
+						JMenuItem editMenuItem     = new JMenuItem("Изменить");
+						JMenuItem deleteMenuItem   = new JMenuItem("Удалить");
+						JMenuItem aboutMenuItem    = new JMenuItem("Подробнее");
+						JMenuItem favoriteMenuItem = new JMenuItem("Добавить в избранное");
 
 						editMenuItem.addActionListener(e1 -> editSelectedContact());
 						deleteMenuItem.addActionListener(e1 -> deleteSelectedContact());
 						aboutMenuItem.addActionListener(e1 -> aboutSelectedContact());
+						favoriteMenuItem.addActionListener(e1 -> favoriteSelectedContact());
 
 						contextMenu.add(editMenuItem);
 						contextMenu.add(deleteMenuItem);
 						contextMenu.add(aboutMenuItem);
+						contextMenu.add(favoriteMenuItem);
 
 						contextMenu.addSeparator();
 
@@ -388,6 +394,28 @@ public class ContactBookUI extends JFrame {
 
 			JOptionPane.showMessageDialog(this, scrollPane,
 				"Подробная информация о контакте", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
+	private void favoriteSelectedContact() {
+		int selectedIndex = contactsList.getSelectedIndex();
+		if (selectedIndex >= 0 && selectedIndex < idList.size()) {
+			int contactId = idList.get(selectedIndex);
+			UserInfo contact = contacts.get(contactId);
+
+			if (favoriteContacts.contains(contact)) {
+				favoriteContacts.remove(contact);
+
+				JOptionPane.showMessageDialog(this,
+					"Контакт удален из избранного",
+					"Избранное", JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				favoriteContacts.add(contact);
+
+				JOptionPane.showMessageDialog(this,
+					"Контакт добавлен в избранное",
+					"Избранное", JOptionPane.INFORMATION_MESSAGE);
+			}
 		}
 	}
 
