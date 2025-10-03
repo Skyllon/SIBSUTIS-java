@@ -321,7 +321,11 @@ public class ContactBookUI extends JFrame {
 						JMenuItem editMenuItem     = new JMenuItem("Изменить");
 						JMenuItem deleteMenuItem   = new JMenuItem("Удалить");
 						JMenuItem aboutMenuItem    = new JMenuItem("Подробнее");
-						JMenuItem favoriteMenuItem = new JMenuItem("Добавить в избранное");
+
+						JMenuItem favoriteMenuItem = new JMenuItem(
+							favoriteContacts.contains(contact) ? "Удалить из избранного"
+							: "Добавить в избранное"
+						);
 
 						editMenuItem.addActionListener(e1 -> editSelectedContact());
 						deleteMenuItem.addActionListener(e1 -> deleteSelectedContact());
