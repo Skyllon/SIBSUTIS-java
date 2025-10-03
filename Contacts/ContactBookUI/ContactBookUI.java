@@ -197,8 +197,8 @@ public class ContactBookUI extends JFrame {
 
 		for (Map.Entry<Integer, UserInfo> entry : sortedContacts) {
 			UserInfo user 		 = entry.getValue();
-			String contactInfo = String.format("%s %s: %s",
-				user.getName(), user.getSurname(), user.getNumber());
+			String contactInfo = String.format("(%s) %s %s: %s",
+				user.getContactType(), user.getName(), user.getSurname(), user.getNumber());
 			listModel.addElement(contactInfo);
 			idList.add(entry.getKey());
 		}
