@@ -18,6 +18,7 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,6 +53,7 @@ public class ContactBookUI extends JFrame {
 	private JPopupMenu contextMenu;
 	private DefaultListModel<String> listModel;
 	private JTextField searchField;
+	private JCheckBox onlyFavorites;
 	private JLabel countLabel;
 	private String currentFilter = "";
 
@@ -91,6 +93,10 @@ public class ContactBookUI extends JFrame {
     });
     topPanel.add(new JLabel("Поиск:"));
     topPanel.add(searchField);
+
+		onlyFavorites = new JCheckBox("Показать избарнные контакты", false);
+		topPanel.add(onlyFavorites);
+
 
     JButton addUserBtn = new JButton("Добавить пользователя");
     addUserBtn.addActionListener((event) -> addUserDialog(contacts));
