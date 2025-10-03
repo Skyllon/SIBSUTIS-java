@@ -7,7 +7,7 @@ import java.util.Random;
 import java.lang.Thread;
 import java.io.File;
 
-public class PersonalUserInfo  extends UserInfo implements ContactAvailability.Callable {
+public class PersonalUserInfo extends UserInfo implements ContactAvailability.Callable {
   private String birthDate;
   private String aboutUser;
   private String address;
@@ -15,58 +15,79 @@ public class PersonalUserInfo  extends UserInfo implements ContactAvailability.C
   {
     birthDate = "undefined";
     aboutUser = "undefined";
-    address   = "undefined";
-  } public PersonalUserInfo(){}
+    address = "undefined";
+  }
+
+  public PersonalUserInfo() {
+  }
 
   public PersonalUserInfo(
-    String number,
-    String name,
-    String surname,
-    String birthDate,
-    String aboutUser,
-    String address
-  ) {
+      String number,
+      String name,
+      String surname,
+      String birthDate,
+      String aboutUser,
+      String address) {
     super(number, name, surname);
 
     this.birthDate = birthDate;
     this.aboutUser = aboutUser;
-    this.address   = address;
+    this.address = address;
   }
 
-  public void setBirthDate(String birthDate) { this.birthDate = birthDate; }
-  public void setAboutUser(String aboutUser) { this.aboutUser = aboutUser; }
-  public void setAddress(String address)     { this.address   = address;   }
+  public void setBirthDate(String birthDate) {
+    this.birthDate = birthDate;
+  }
 
-  public String getBirthDate()               { return this.birthDate;      }
-  public String getAboutUser()               { return this.aboutUser;      }
-  public String getAddress()                 { return this.address;        }
+  public void setAboutUser(String aboutUser) {
+    this.aboutUser = aboutUser;
+  }
 
+  public void setAddress(String address) {
+    this.address = address;
+  }
 
-  public String getContactType() { return "Личный"; }
+  public String getBirthDate() {
+    return this.birthDate;
+  }
+
+  public String getAboutUser() {
+    return this.aboutUser;
+  }
+
+  public String getAddress() {
+    return this.address;
+  }
+
+  public String getContactType() {
+    return "Личный";
+  }
 
   public String getFullInfo() {
     return String.format(
-      "Имя: %s\nНомер телефона: %s\nФамилия: %s\nДень рождения: %s\n" +
-      "Описание: %s\nАдрес: %s",
-      userName, userNumber, userSurname, birthDate, aboutUser, address);
+        "Имя: %s\nНомер телефона: %s\nФамилия: %s\nДень рождения: %s\n" +
+            "Описание: %s\nАдрес: %s",
+        userName, userNumber, userSurname, birthDate, aboutUser, address);
   }
 
   public void call() {
     try {
-        Random random = new Random();
-        int duration = random.nextInt(8) + 3;
+      Random random = new Random();
+      int duration = random.nextInt(8) + 3;
 
-        System.out.println("Длительность: " + duration + " секунд");
+      System.out.println("Длительность: " + duration + " секунд");
 
-        playRingtone(duration);
+      playRingtone(duration);
 
-        if (duration % 2 == 0) {
-          Thread.sleep(1000);
-          playRandomPersonalSound();
-        }
+      if (duration % 2 == 0) {
+        Thread.sleep(1000);
+        playRandomPersonalSound();
+      }
 
-    } catch (Exception e) { e.printStackTrace(); }
-}
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
   private void playRingtone(int duration) {
     try {
@@ -97,20 +118,22 @@ public class PersonalUserInfo  extends UserInfo implements ContactAvailability.C
       }
 
       clip.close();
-    } catch(Exception e) { e.printStackTrace(); }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void playRandomPersonalSound() {
     try {
-      Random random     = new Random();
-      String path       = new File("").getAbsolutePath();
+      Random random = new Random();
+      String path = new File("").getAbsolutePath();
       File persSoundDir = new File(path + "/assets/sounds/answer_sounds/Personal");
-      File[] soundFiles = persSoundDir.listFiles((dir, name) ->
-        name.toLowerCase().endsWith(".wav"));
+      File[] soundFiles = persSoundDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".wav"));
 
-      if (soundFiles == null || soundFiles.length == 0) return;
+      if (soundFiles == null || soundFiles.length == 0)
+        return;
 
-      File randSoundFile           = soundFiles[random.nextInt(soundFiles.length)];
+      File randSoundFile = soundFiles[random.nextInt(soundFiles.length)];
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(randSoundFile);
       Clip clip = AudioSystem.getClip();
       clip.open(audioStream);
@@ -118,7 +141,9 @@ public class PersonalUserInfo  extends UserInfo implements ContactAvailability.C
       clip.start();
       Thread.sleep(randSoundFile.length() * 1000);
       clip.close();
-    } catch(Exception e) { e.printStackTrace(); }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
 }
