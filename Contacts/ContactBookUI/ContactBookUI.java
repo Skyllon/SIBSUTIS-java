@@ -38,6 +38,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
+import java.time.LocalDateTime;
 
 // Contacts manage and store
 import ContactBook.ContactBook;
@@ -47,6 +48,7 @@ import UserInfo.WorkUserInfo;
 
 public class ContactBookUI extends JFrame {
 	private HashMap<Integer, UserInfo> contacts;
+	private List<String> callHistory;
 	private Set<UserInfo> favoriteContacts;
 	private JList<String> contactsList;
 	private ArrayList<Integer> idList;
@@ -60,8 +62,9 @@ public class ContactBookUI extends JFrame {
 	FileExplorer fileExplorer = new FileExplorer();
 
 	public ContactBookUI() {
-		contacts = ContactBook.init();
+		contacts         = ContactBook.init();
 		favoriteContacts = new HashSet<>();
+		callHistory      = new ArrayList<>();
 
 		// Window
 		setTitle(WindowParams.WINDOW_TITLE);
@@ -554,10 +557,25 @@ public class ContactBookUI extends JFrame {
 				try {
 					SwingUtilities.invokeLater(() -> statusLabel.setText("🔔 Идет звонок..."));
 
-					if (contact instanceof PersonalUserInfo)
+					if (contact instanceof PersonalUserInfo) {
 						((PersonalUserInfo) contact).call();
-					else if (contact instanceof WorkUserInfo)
+
+						callHistory.add(String.format("[%s]: (%s) %s %s",
+						LocalDateTime.now(), contact.getContactType(),
+						contact.getName(), contact.getSurname()));
+
+						for (final String element : callHistory)
+							System.out.printf("%s\n", element);
+					} else if (contact instanceof WorkUserInfo) {
 						((WorkUserInfo) contact).call();
+
+						callHistory.add(String.format("[%s]: (%s) %s %s",
+						LocalDateTime.now(), contact.getContactType(),
+						contact.getName(), contact.getSurname()));
+
+						for (final String element : callHistory)
+							System.out.printf("%s\n", element);
+					}
 
 					SwingUtilities.invokeLater(() -> {
 						statusLabel.setText("✅ Звонок завершен");
