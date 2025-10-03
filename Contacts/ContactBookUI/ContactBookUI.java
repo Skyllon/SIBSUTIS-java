@@ -95,6 +95,7 @@ public class ContactBookUI extends JFrame {
     topPanel.add(searchField);
 
 		onlyFavorites = new JCheckBox("Показать избарнные контакты", false);
+		onlyFavorites.addActionListener(event -> updateContactsList(contacts));
 		topPanel.add(onlyFavorites);
 
 
@@ -183,12 +184,16 @@ public class ContactBookUI extends JFrame {
 		for (Map.Entry<Integer, UserInfo> entry : contacts.entrySet()) {
 			UserInfo user = entry.getValue();
 
-			if (currentFilter.isEmpty() ||
+			boolean matchesSearch = currentFilter.isEmpty() ||
 				user.getName().toLowerCase().contains(currentFilter) ||
 				user.getSurname().toLowerCase().contains(currentFilter) ||
-				user.getNumber().toLowerCase().contains(currentFilter)) {
+				user.getNumber().toLowerCase().contains(currentFilter);
+
+			boolean matchesFavorite = !onlyFavorites.isSelected() ||
+				favoriteContacts.contains(user);
+
+			if (matchesSearch && matchesFavorite)
 				sortedContacts.add(entry);
-			}
 		}
 
 		sortedContacts.sort((e1, e2) -> {
@@ -212,7 +217,8 @@ public class ContactBookUI extends JFrame {
 			idList.add(entry.getKey());
 		}
 
-		countLabel.setText("Всего контактов: " + listModel.getSize());
+		String filterInfo = onlyFavorites.isSelected() ? " (только избранные)" : "";
+    countLabel.setText("Всего контактов: " + listModel.getSize() + filterInfo);
   }
 
  private void addUserDialog(HashMap<Integer, UserInfo> contacts) {
